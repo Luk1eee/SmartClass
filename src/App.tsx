@@ -43,6 +43,13 @@ const CLASSES = [
   { id: '613', building: 'อาคาร 110 ปี', floor: '3rd Floor' },
 ]
 
+const ROOM_MODELS: Record<string, string> = {
+  '606': '/models/classroom.glb',
+  '609': '/models/609.glb',
+  '610': '/models/610.glb',
+
+}
+
 function ChevronRight() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#E53E3E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -447,14 +454,18 @@ export default function App() {
           </h2>
         </div>
 
-          {selectedClass.id === '606' ? (
-        // 3D model only for this room
-        <ClassroomViewer
-          onApplianceClick={handleApplianceControl}
-          shouldSpin={!hasSpunOnce}
-          onSpinComplete={() => setHasSpunOnce(true)}
-        />
-      ) : (
+          {ROOM_MODELS[selectedClass.id] ? (
+            <ClassroomViewer
+              modelPath={ROOM_MODELS[selectedClass.id]}
+              onApplianceClick={handleApplianceControl}
+              applianceStates={{
+                projector: appliances.projector,
+                light: appliances.light,
+                aircon: appliances.aircon,
+                fan: fanSpeed > 0,
+              }}
+            />
+          ) : (
           // Original button grid for every other room
         <div className="flex-1 overflow-y-auto px-5 pb-4 grid grid-cols-2 gap-4">
           {applianceList.map(({ id, name, Icon }) => {
@@ -850,7 +861,7 @@ export default function App() {
               onClick={() => {
                 setFeedbackText('')
                 setRating(4)
-                setScreen('classSelect')
+                setScreen('applianceSelect')
               }}
               className="w-full py-4 rounded-2xl font-bold text-white text-base active:scale-95 transition-transform shadow-lg"
               style={{ backgroundColor: RED, boxShadow: '0 4px 20px #E53E3E55' }}
