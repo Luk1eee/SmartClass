@@ -34,33 +34,43 @@ function ClassroomModel({ modelPath, onApplianceClick, onMarkersFound }: Classro
 
   useEffect(() => {
     if (found.current) return
-    found.current = true
 
-    scene.updateMatrixWorld(true)
+    const raf = requestAnimationFrame(() => {
+      found.current = true
+      scene.updateMatrixWorld(true)
 
-    const box = new THREE.Box3()
-    const markers: Marker[] = []
-    let counter = 0
+      const box = new THREE.Box3()
+      const markers: Marker[] = []
+      let counter = 0
 
-    scene.traverse((obj) => {
-      const rawName = obj.name || ''
-      if (!rawName.toLowerCase().startsWith('appliance_')) return
+      scene.traverse((obj) => {
+        try {
+          const rawName = obj.name || ''
+          if (!rawName.toLowerCase().startsWith('appliance_')) return
 
-      const withoutPrefix = rawName.replace(/^appliance_/i, '')
-      const cleanId = withoutPrefix.split('.')[0].trim().toLowerCase() as ApplianceId
+          const withoutPrefix = rawName.replace(/^appliance_/i, '')
+          const cleanId = withoutPrefix.split('.')[0].trim().toLowerCase() as ApplianceId
 
-      box.setFromObject(obj)
-      const center = new THREE.Vector3()
-      box.getCenter(center)
+          box.setFromObject(obj)
+          if (box.isEmpty()) return
 
-      markers.push({
-        id: cleanId,
-        key: `${cleanId}-${counter++}`,
-        position: [center.x, box.max.y + 0.3, center.z],
+          const center = new THREE.Vector3()
+          box.getCenter(center)
+
+          markers.push({
+            id: cleanId,
+            key: `${cleanId}-${counter++}`,
+            position: [center.x, box.max.y + 0.3, center.z],
+          })
+        } catch (err) {
+          console.warn('Skipped bad appliance object:', obj.name, err)
+        }
       })
+
+      onMarkersFound(markers)
     })
 
-    onMarkersFound(markers)
+    return () => cancelAnimationFrame(raf)
   }, [scene, onMarkersFound])
 
   return (
@@ -80,6 +90,41 @@ function ClassroomModel({ modelPath, onApplianceClick, onMarkersFound }: Classro
   )
 }
 
+function ModelLoading() {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '10px',
+      }}
+    >
+      <div
+        style={{
+          width: '36px',
+          height: '36px',
+          border: '4px solid #ffd6d6',
+          borderTopColor: '#E53E3E',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }}
+      />
+      <p style={{ color: '#E53E3E', fontWeight: 600, fontSize: '13px', margin: 0 }}>
+        กำลังโหลดโมเดล...
+      </p>
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 interface ClassroomViewerProps {
   modelPath: string
   onApplianceClick: (id: ApplianceId) => void
@@ -88,20 +133,33 @@ interface ClassroomViewerProps {
 
 export default function ClassroomViewer({ modelPath, onApplianceClick, applianceStates }: ClassroomViewerProps) {
   const [markers, setMarkers] = useState<Marker[]>([])
+  const [canvasKey, setCanvasKey] = useState(0)
   const handleMarkersFound = useCallback((m: Marker[]) => setMarkers(m), [])
+
+  const handleContextLost = useCallback((e: Event) => {
+    e.preventDefault()
+    console.warn('WebGL context lost — remounting canvas')
+    setCanvasKey((k) => k + 1)
+  }, [])
 
   return (
     <div>
       <p style={{ textAlign: 'center', color: '#E53E3E', fontWeight: 700, fontSize: '15px', margin: '0 0 10px' }}>
         กรุณาเลือกเครื่องใช้ไฟฟ้า
       </p>
-      <div style={{ width: '100%', height: '340px', borderRadius: '16px', overflow: 'hidden', background: '#fff0f0' }}>
-        <Canvas camera={{ position: [0, 8, 20], fov: 50 }}>
-          <ambientLight intensity={1.5} />
-          <directionalLight position={[5, 5, 5]} intensity={2} />
-          <hemisphereLight intensity={1} />
+      <div style={{ width: '100%', height: '340px', borderRadius: '16px', overflow: 'hidden', background: '#fff0f0', position: 'relative' }}>
+        <Suspense fallback={<ModelLoading />}>
+          <Canvas
+            key={canvasKey}
+            camera={{ position: [0, 8, 20], fov: 50 }}
+            onCreated={({ gl }) => {
+              gl.domElement.addEventListener('webglcontextlost', handleContextLost, false)
+            }}
+          >
+            <ambientLight intensity={1.5} />
+            <directionalLight position={[5, 5, 5]} intensity={2} />
+            <hemisphereLight intensity={1} />
 
-          <Suspense fallback={null}>
             <ClassroomModel
               modelPath={modelPath}
               onApplianceClick={onApplianceClick}
@@ -124,15 +182,15 @@ export default function ClassroomViewer({ modelPath, onApplianceClick, appliance
                 </Html>
               )
             })}
-          </Suspense>
 
-          <OrbitControls
-            enablePan={false}
-            target={[0, 3, 0]}
-            autoRotate
-            autoRotateSpeed={1.2}
-          />
-        </Canvas>
+            <OrbitControls
+              enablePan={false}
+              target={[0, 3, 0]}
+              autoRotate
+              autoRotateSpeed={1.2}
+            />
+          </Canvas>
+        </Suspense>
       </div>
     </div>
   )
