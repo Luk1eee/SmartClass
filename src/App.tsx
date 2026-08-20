@@ -25,7 +25,6 @@ const CLASSES = [
   { id: 'ห้องพักครูภาษาไทย', building: 'อาคาร 110 ปี', floor: '2nd Floor' },
   { id: 'ห้องพักครูแนะแนว', building: 'อาคาร 110 ปี', floor: '2nd Floor' },
   { id: 'ห้องพักครูสังคม', building: 'อาคาร 110 ปี', floor: '3rd Floor' },
-  { id: 'ห้องเรียน SEEK', building: 'อาคาร 110 ปี', floor: '2nd Floor' },
   { id: 'Lab 1', building: 'อาคาร 110 ปี', floor: '1st Floor' },
   { id: 'Lab 2', building: 'อาคาร 110 ปี', floor: '1st Floor' },
   { id: '601', building: 'อาคาร 110 ปี', floor: '2nd Floor' },
@@ -44,9 +43,15 @@ const CLASSES = [
 ]
 
 const ROOM_MODELS: Record<string, string> = {
+  '601': '/models/601.glb',
+  '603': '/models/603.glb',
   '606': '/models/classroom.glb',
+  '607': '/models/607.glb',
+  '608': '/models/608.glb',
   '609': '/models/609.glb',
   '610': '/models/610.glb',
+  '612': '/models/612.glb',
+  '613': '/models/613.glb',
 
 }
 
