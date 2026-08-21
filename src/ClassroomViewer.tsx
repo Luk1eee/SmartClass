@@ -76,7 +76,7 @@ function ClassroomModel({ modelPath, onApplianceClick, onMarkersFound }: Classro
   return (
     <primitive
       object={scene}
-      scale = {0.7}
+      scale={0.7}
       onClick={(e: any) => {
         e.stopPropagation()
         const rawName: string = e.object.name || ''
@@ -152,6 +152,8 @@ export default function ClassroomViewer({ modelPath, onApplianceClick, appliance
           <Canvas
             key={canvasKey}
             camera={{ position: [0, 8, 20], fov: 50 }}
+            dpr={[1, 1.5]}
+            gl={{ powerPreference: 'default', antialias: false }}
             onCreated={({ gl }) => {
               gl.domElement.addEventListener('webglcontextlost', handleContextLost, false)
             }}
