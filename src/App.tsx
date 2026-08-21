@@ -43,7 +43,6 @@ const CLASSES = [
 ]
 
 const ROOM_MODELS: Record<string, string> = {
-  '601': '/models/601.glb',
   '603': '/models/603.glb',
   '606': '/models/classroom.glb',
   '607': '/models/607.glb',
